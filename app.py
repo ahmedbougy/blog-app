@@ -1,4 +1,4 @@
-from flask import Flask , render_template_string , request , url_for , redirect
+from flask import Flask , render_template , request , url_for , redirect , flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash , check_password_hash 
@@ -49,19 +49,7 @@ def load_user(user_id):
 @app.route('/')
 def home():
     posts = Post.query.all()
-     # بناء صفحة HTML بسيطة
-    html = "<h1>My Blog</h1>"
-    html += "<p><a href='/login'>Login</a> | <a href='/register'>Register</a></p>"
-    
-    for post in posts:
-        html += f"<hr>"
-        html += f"<h2>{post.title}</h2>"
-        html += f"<p>{post.content}</p>"
-        html += f"<small>By: {post.author.username}</small>"
-        if current_user.is_authenticated and current_user.id == post.user_id :
-            html += f"<a href='/delete/{post.id}'>Delete</a>"
-            html += f"<a href='/edit/{post.id}'>Edit</a>"
-    return html
+    return render_template('index.html', posts=posts)
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -76,20 +64,18 @@ def register():
             db.session.add(new_user)
             db.session.commit()
 
-            return f"User {username} registered successfully!"
-        
+            flash(
+                'Account created successfully! You can now log in.', 'success'
+            )# ستظهر فور وصوله لصفحة login
+    
+            return redirect(url_for('login'))  # توجيه إلى صفحة تسجيل الدخول
+
         except IntegrityError:
             db.session.rollback()
-            return f"Error: Username '{username}' already exists!"
+            flash(f"Error: Username '{username}' already exists!", 'danger')
+            return redirect(url_for('register'))  # إعادة توجيه لنفس صفحة التسجيل
 
-    return render_template_string('''
-        <h1>Register</h1>
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-    ''')
+    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -102,26 +88,15 @@ def login():
             login_user(user)
             return redirect(url_for('dashboard'))
         else :
-            return 'Invalid username or password!'
+            flash('Invalid username or password!', 'danger')
+            return redirect(url_for('login'))
 
-    return render_template_string('''
-        <h1>Login</h1>
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <p><a href="/register">Don't have an account? Register here.</a></p>
-    ''')
+    return render_template('login.html')
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return f"""
-        <h1>Welcome, {current_user.username}!</h1>
-        <p><a href="/create">Write a New Post</a></p>
-        <p><a href="/logout">Logout</a></p>
-    """
+    return render_template('dashboard.html')
 
 @app.route('/logout')
 @login_required
@@ -142,15 +117,7 @@ def create_post():
 
         return redirect(url_for('home'))
 
-    return render_template_string('''
-        <h1>Create a New Post</h1>
-        <form method="POST">
-            <input type="text" name="title" placeholder="Post Title" required><br><br>
-            <textarea name="content" placeholder="Write your content here..." rows="5" cols="40" required></textarea><br><br>
-            <button type="submit">Publish</button>
-        </form>
-        <p><a href="/">Back to Dashboard</a></p>    
-''')
+    return render_template('create_post.html')
 
 @app.route('/delete/<int:post_id>')
 @login_required
@@ -179,15 +146,7 @@ def edit_post(post_id):
         return redirect(url_for('home'))
 
     # 4. إذا فتح الصفحة للتو (GET): نعرض النموذج مع تعبئة البيانات الحالية مسبقاً
-    return render_template_string(f'''
-        <h1>Edit Post</h1>
-        <form method="POST">
-            <input type="text" name="title" value="{post.title}" required><br><br>
-            <textarea name="content" rows="5" required>{post.content}</textarea><br><br>
-            <button type="submit">Update</button>
-        </form>
-        <p><a href="/">Cancel</a></p>
-    ''')
+    return render_template('edit_post.html', post=post)
 if __name__ == '__main__' :
     with app.app_context():
         db.create_all()
