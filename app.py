@@ -9,7 +9,7 @@ app = Flask(__name__)
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(BASE_DIR,'blog.db')})")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(BASE_DIR, 'blog.db')}")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-fallback-key')
 
@@ -151,7 +151,8 @@ def edit_post(post_id):
 
     # 4. إذا فتح الصفحة للتو (GET): نعرض النموذج مع تعبئة البيانات الحالية مسبقاً
     return render_template('edit_post.html', post=post)
+
+with app.app_context():
+    db.create_all()
 if __name__ == '__main__' :
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
