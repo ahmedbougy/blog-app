@@ -31,13 +31,37 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author = db.relationship('User', backref= 'posts' )
+
+    def __repr__(self):
+        return f'<Post {self.title}>'
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route('/')
-def welcome():
-    return "Database Connected!"
+def home():
+    posts = Post.query.all()
+     # بناء صفحة HTML بسيطة
+    html = "<h1>My Blog</h1>"
+    html += "<p><a href='/login'>Login</a> | <a href='/register'>Register</a></p>"
+    
+    for post in posts:
+        html += f"<hr>"
+        html += f"<h2>{post.title}</h2>"
+        html += f"<p>{post.content}</p>"
+        html += f"<small>By: {post.author.username}</small>"
+        if current_user.is_authenticated and current_user.id == post.user_id :
+            html += f"<a href='/delete/{post.id}'>Delete</a>"
+            html += f"<a href='/edit/{post.id}'>Edit</a>"
+    return html
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -93,13 +117,77 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return f"Welcom, {current_user.username} This is your dashboard. <br><a href='/logout'>Logout</a>"
+    return f"""
+        <h1>Welcome, {current_user.username}!</h1>
+        <p><a href="/create">Write a New Post</a></p>
+        <p><a href="/logout">Logout</a></p>
+    """
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/create', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+
+        new_post = Post(title=title, content=content, user_id=current_user.id)
+        db.session.add(new_post)
+        db.session.commit()
+
+        return redirect(url_for('home'))
+
+    return render_template_string('''
+        <h1>Create a New Post</h1>
+        <form method="POST">
+            <input type="text" name="title" placeholder="Post Title" required><br><br>
+            <textarea name="content" placeholder="Write your content here..." rows="5" cols="40" required></textarea><br><br>
+            <button type="submit">Publish</button>
+        </form>
+        <p><a href="/">Back to Dashboard</a></p>    
+''')
+
+@app.route('/delete/<int:post_id>')
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    if post.user_id != current_user.id :
+        return "You are not allowed to delete this post!", 403
+
+    db.session.delete(post)
+    db.session.commit()
+
+    return redirect(url_for('home'))
+
+@app.route('/edit/<int:post_id>', methods=['GET','POST'])
+@login_required
+def edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id :
+        return "You are not allowed to edit this post!", 403
+
+    if request.method == 'POST':
+        post.title = request.form.get('title')
+        post.content = request.form.get('content')
+        db.session.commit()
+        return redirect(url_for('home'))
+
+    # 4. إذا فتح الصفحة للتو (GET): نعرض النموذج مع تعبئة البيانات الحالية مسبقاً
+    return render_template_string(f'''
+        <h1>Edit Post</h1>
+        <form method="POST">
+            <input type="text" name="title" value="{post.title}" required><br><br>
+            <textarea name="content" rows="5" required>{post.content}</textarea><br><br>
+            <button type="submit">Update</button>
+        </form>
+        <p><a href="/">Cancel</a></p>
+    ''')
 if __name__ == '__main__' :
     with app.app_context():
         db.create_all()
