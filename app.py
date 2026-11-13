@@ -4,13 +4,17 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash , check_password_hash 
 from sqlalchemy.exc import IntegrityError
 import os 
-
+from dotenv import load_dotenv
 app = Flask(__name__)
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(BASE_DIR,'blog.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f"sqlite:///{os.path.join(BASE_DIR,'blog.db')})")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'my-super-secret-key-change-me'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-fallback-key')
+
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://") :
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
