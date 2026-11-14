@@ -15,17 +15,21 @@
         --text-muted: #94a3b8;
     }
 
+    /* التمرير السلس للمقالات عند القفز إليها عبر الـ Anchor */
+    html {
+        scroll-behavior: smooth;
+    }
+
     body {
         background-color: var(--bg-deep);
         color: var(--text-main);
-        font-family: 'Plus Jakarta+Sans', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         margin: 0;
         overflow-x: hidden;
         direction: ltr;
         text-align: left;
     }
 
-    /* خلفية الجزيئات الحيوية التفاعلية */
     #neural-canvas {
         position: fixed;
         top: 0;
@@ -44,7 +48,6 @@
         z-index: 1;
     }
 
-    /* شريط التحكم العلوي (زر الصوت) */
     .hud-bar {
         display: flex;
         justify-content: space-between;
@@ -98,7 +101,6 @@
         transform: scale(1.05);
     }
 
-    /* العنوان الرئيسي المتوهج */
     .blog-title {
         text-align: center;
         font-size: 3rem;
@@ -113,14 +115,12 @@
         text-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
     }
 
-    /* شبكة المقالات */
     .posts-grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 30px;
+        gap: 35px;
     }
 
-    /* بطاقة المقال الزجاجية مع انعكاسات الفأرة */
     .post {
         position: relative;
         background: var(--glass-bg);
@@ -135,9 +135,11 @@
         opacity: 0;
         transform: translateY(30px);
         animation: cardEntrance 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        
+        /* مسافة كافية في الأعلى عند القفز للمقال عبر الـ Anchor حتى لا يختفي تحت الشريط */
+        scroll-margin-top: 100px;
     }
 
-    /* تأثير الإضاءة التفاعلية عند تتبع الماوس */
     .post::before {
         content: "";
         position: absolute;
@@ -174,11 +176,6 @@
         margin-top: 0;
         margin-bottom: 15px;
         font-weight: 700;
-        transition: text-shadow 0.3s;
-    }
-
-    .post:hover h2 {
-        text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
     }
 
     .post p {
@@ -196,6 +193,7 @@
         padding-top: 18px;
         font-size: 0.9rem;
         color: var(--text-muted);
+        margin-bottom: 20px;
     }
 
     .author-badge {
@@ -207,7 +205,123 @@
         font-weight: 600;
     }
 
-    /* أزرار التعديل والحذف */
+    .reactions-bar {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-react {
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-react:hover {
+        border-color: var(--accent-cyan);
+        color: var(--text-main);
+    }
+
+    .comments-section {
+        margin-top: 20px;
+        background: rgba(15, 23, 42, 0.4);
+        border-radius: 14px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .comments-section h3 {
+        font-size: 1.1rem;
+        color: var(--accent-cyan);
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .comment-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+    }
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+    .comment-author {
+        font-weight: 600;
+        color: #e879f9;
+        margin-right: 8px;
+    }
+
+    .delete-comment-btn {
+        color: #f43f5e;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.2s;
+        margin-left: 10px;
+        opacity: 0.8;
+    }
+
+    .delete-comment-btn:hover {
+        opacity: 1;
+        text-decoration: underline;
+    }
+
+    .comment-form {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .comment-form input {
+        flex: 1;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .comment-form input:focus {
+        border-color: var(--accent-cyan);
+    }
+
+    .btn-comment {
+        background: var(--accent-cyan);
+        color: #090d16;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+
+    .btn-comment:hover {
+        opacity: 0.9;
+    }
+
     .post-actions {
         margin-top: 20px;
         display: flex;
@@ -232,7 +346,6 @@
     .btn-edit:hover {
         background: var(--accent-cyan);
         color: #090d16;
-        box-shadow: 0 0 15px var(--accent-cyan);
     }
 
     .btn-delete {
@@ -244,10 +357,8 @@
     .btn-delete:hover {
         background: #f43f5e;
         color: #fff;
-        box-shadow: 0 0 15px #f43f5e;
     }
 
-    /* حالة عدم وجود مقالات */
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -259,12 +370,6 @@
         color: var(--text-muted);
     }
 
-    .empty-state span {
-        color: var(--accent-cyan);
-        font-weight: 600;
-    }
-
-    /* الحركات (Animations) */
     @keyframes pulse {
         0%, 100% { transform: scale(1); opacity: 1; }
         50% { transform: scale(1.5); opacity: 0.5; }
@@ -282,11 +387,9 @@
     }
 </style>
 
-<!-- خلفية تفاعلية متحركة -->
 <canvas id="neural-canvas"></canvas>
 
 <div class="blog-container">
-    <!-- شريط الحالة والصوت العلوي -->
     <div class="hud-bar">
         <div class="hud-status">
             <span class="pulse-dot"></span>
@@ -303,7 +406,8 @@
     {% if posts %}
         <div class="posts-grid">
             {% for post in posts %}
-                <div class="post" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                <!-- الـ id للمرساة والـ scroll-margin -->
+                <div class="post" id="post-{{ post.id }}" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
                     <div class="post-content-wrapper">
                         <h2>{{ post.title }}</h2>
                         <p>{{ post.content }}</p>
@@ -311,6 +415,50 @@
                         <div class="post-meta">
                             <span>Published by:</span>
                             <span class="author-badge">{{ post.author.username }}</span>
+                        </div>
+
+                        <!-- شريط التفاعل (الإعجاب وعدم الإعجاب) -->
+                        <div class="reactions-bar">
+                            <a href="{{ url_for('react', post_id=post.id, action='like') }}" class="btn-react" onclick="playChime(600, 900, 0.1)">
+                                👍 Like ({{ post.reactions | selectattr('is_like', 'equalto', True) | list | length }})
+                            </a>
+                            <a href="{{ url_for('react', post_id=post.id, action='dislike') }}" class="btn-react" onclick="playChime(400, 200, 0.1)">
+                                👎 Dislike ({{ post.reactions | selectattr('is_like', 'equalto', False) | list | length }})
+                            </a>
+                        </div>
+
+                        <!-- قسم التعليقات -->
+                        <div class="comments-section">
+                            <h3>Comments ({{ post.comments | length }})</h3>
+                            
+                            {% if post.comments %}
+                                {% for comment in post.comments %}
+                                    <div class="comment-item">
+                                        <div>
+                                            <span class="comment-author">{{ comment.author.username }}:</span>
+                                            <span>{{ comment.text }}</span>
+                                        </div>
+                                        <!-- زر حذف التعليق (يظهر فقط لصاحب التعليق) -->
+                                        {% if current_user.is_authenticated and current_user.id == comment.user_id %}
+                                            <a href="{{ url_for('delete_comment', comment_id=comment.id) }}" 
+                                               class="delete-comment-btn" 
+                                               onclick="return confirm('Are you sure you want to delete this comment?');">Delete</a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 5px 0;">No comments yet. Be the first to share your thoughts!</p>
+                            {% endif %}
+
+                            <!-- نموذج إضافة تعليق -->
+                            {% if current_user.is_authenticated %}
+                                <form action="{{ url_for('add_comment', post_id=post.id) }}" method="POST" class="comment-form">
+                                    <input type="text" name="comment_text" placeholder="Write a comment..." required autocomplete="off">
+                                    <button type="submit" class="btn-comment" onclick="playChime(700, 1100, 0.08)">Post</button>
+                                </form>
+                            {% else %}
+                                <p style="font-size: 0.85rem; margin-top: 10px; color: var(--text-muted);">Please <a href="{{ url_for('login') }}" style="color: var(--accent-cyan);">login</a> to write a comment.</p>
+                            {% endif %}
                         </div>
 
                         {% if current_user.is_authenticated and current_user.id == post.user_id %}
@@ -331,9 +479,6 @@
 </div>
 
 <script>
-    // ==========================================
-    // 1. Web Audio API Sound Effects Engine
-    // ==========================================
     let audioCtx = null;
     let soundEnabled = false;
 
@@ -380,7 +525,6 @@
         playChime(280, 120, 0.25, 'sawtooth');
     }
 
-    // ربط التأثيرات الصوتية وحركة البطاقات (3D Tilt & Mouse Glow)
     document.querySelectorAll('.post').forEach(card => {
         card.addEventListener('mouseenter', () => {
             playChime(400, 600, 0.08, 'sine');
@@ -396,9 +540,9 @@
 
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -3;
-            const rotateY = ((x - centerX) / centerX) * 3;
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.015)`;
+            const rotateX = ((y - centerY) / centerY) * -2;
+            const rotateY = ((x - centerX) / centerX) * 2;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
         });
 
         card.addEventListener('mouseleave', () => {
@@ -406,15 +550,6 @@
         });
     });
 
-    document.querySelectorAll('.btn-blog').forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            playChime(700, 1000, 0.06, 'triangle');
-        });
-    });
-
-    // ==========================================
-    // 2. Interactive Ambient Particles (Canvas)
-    // ==========================================
     const canvas = document.getElementById('neural-canvas');
     const ctx = canvas.getContext('2d');
     let width, height, particles;

@@ -40,10 +40,38 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
     author = db.relationship('User', backref= 'posts' )
+    reactions = db.relationship('Reaction', backref='post', lazy=True)
+    comments = db.relationship('Comment',backref='post', lazy=True)
 
     def __repr__(self):
         return f'<Post {self.title}>'
+
+class Reaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    is_like = db.Column(db.Boolean, nullable=False) # True = Like, False = Dislike
+    # منع المستخدم من التفاعل مرتين مع نفس المقال
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_reaction'),)
+
+    def __repr__(self):
+        reaction_type = "Like" if self.is_like else "Dislike"
+        return f'<Reaction {reaction_type} user={self.user_id} post={self.post_id}'
+    
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    author = db.relationship('User', backref='comments')
+
+
+    def __repr__(self):
+       return f'<Comment {self.text[:20]}>'
+
 
 
 @login_manager.user_loader
@@ -129,12 +157,13 @@ def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
 
     if post.user_id != current_user.id :
-        return "You are not allowed to delete this post!", 403
+        flash('You are not authorized to delete this post.', 'danger')
 
     db.session.delete(post)
     db.session.commit()
+    flash('Post deleted successfully!', 'success')
 
-    return redirect(url_for('home'))
+    return redirect(url_for('home') + f'#post-{post_id}')
 
 @app.route('/edit/<int:post_id>', methods=['GET','POST'])
 @login_required
@@ -151,6 +180,68 @@ def edit_post(post_id):
 
     # 4. إذا فتح الصفحة للتو (GET): نعرض النموذج مع تعبئة البيانات الحالية مسبقاً
     return render_template('edit_post.html', post=post)
+
+@app.route('/react/<int:post_id>/<action>')
+@login_required
+def react(post_id, action):
+    post = Post.query.get_or_404(post_id)
+    reaction = Reaction.query.filter_by(user_id=current_user.id, post_id=post.id).first()
+
+    if action == "like":
+        if reaction:
+            if reaction.is_like:
+                db.session.delete(reaction)
+            else:
+                reaction.is_like = True
+
+        else:
+            new_reaction = Reaction(user_id=current_user.id, post_id=post.id, is_like=True)
+            db.session.add(new_reaction)
+
+    elif action == "dislike":
+        if reaction:
+            if not reaction.is_like:
+                db.session.delete(reaction)
+
+            else:
+                reaction.is_like = False
+
+        else:
+            new_reaction = Reaction(user_id=current_user.id, post_id=post.id, is_like=False)
+            db.session.add(new_reaction)
+
+    db.session.commit()
+    return redirect(url_for('home') + f'#post-{post_id}')
+
+@app.route('/comment/<int:post_id>', methods=['POST'])
+@login_required
+def add_comment(post_id):
+    post = Post.query.get_or_404(post_id)
+    text = request.form.get('comment_text')
+
+    if text:
+        new_comment = Comment(text=text , user_id=current_user.id, post_id=post.id)
+        db.session.add(new_comment)
+        db.session.commit()
+
+    return redirect(url_for('home') + f'#post-{post_id}')
+
+@app.route('/delete_comment/<int:comment_id>')
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return redirect(url_for('home'))
+    
+    if comment.user_id != current_user.id :
+        flash('You are not authorized to delete this comment.', 'danger')
+
+    post_id = comment.post_id
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Comment deleted successfully!', 'success')
+    return redirect(url_for('home') + f'#post-{post_id}')
+
 
 with app.app_context():
     db.create_all()
